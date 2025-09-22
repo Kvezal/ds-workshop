@@ -34,7 +34,25 @@ class CSVReader:
         'Unnamed: 0': 'unnamed'
     }
 
-    USELESS_COLUMN_NAMES = ['income', 'ck_mb', 'troponin', 'unnamed']
+    USEFUL_COLUMN_NAMES = [
+        'age',
+        'cholesterol',
+        'heart_rate',
+        'exercise_hours_per_week',
+        'stress_level',
+        'sedentary_hours_per_day',
+        'bmi',
+        'triglycerides',
+        'physical_activity_days_per_week',
+        'sleep_hours_per_day',
+        'blood_sugar',
+        'systolic_blood_pressure',
+        'diastolic_blood_pressure',
+
+        'diabetes',
+        'family_history',
+        'id',
+    ]
 
 
     def __init__(self, file: UploadFile):
@@ -48,15 +66,13 @@ class CSVReader:
         self.df = pandas.read_csv(self._file)
         self.df = self.df.rename(columns=self.PROPERTY_MAP)
 
-        dropping_column_names = self.get_useless_column_names()
-
-        if len(dropping_column_names) > 1:
-            self.df = self.df.drop(dropping_column_names, axis=1)
+        selecting_column_names = self.get_useful_column_names()
+        self.df = self.df[selecting_column_names]
 
 
-    def get_useless_column_names(self) -> list[str]:
+    def get_useful_column_names(self) -> list[str]:
         dropping_column_names = []
-        for column_name in self.USELESS_COLUMN_NAMES:
+        for column_name in self.USEFUL_COLUMN_NAMES:
             if self.df.get(column_name) is not None:
                 dropping_column_names.append(column_name)
         return dropping_column_names

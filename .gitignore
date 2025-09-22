@@ -1,0 +1,6 @@
+.ipynb_checkpoints
+datasets
+models
+.DS_Store
+.idea/
+app/backend/venv

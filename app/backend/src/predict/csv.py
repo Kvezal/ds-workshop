@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Request, UploadFile, File, HTTPException
+from fastapi import APIRouter, Request, UploadFile, HTTPException
 import io
 from fastapi.responses import StreamingResponse
+from pandas import errors
+from pathlib import Path
 
 from model import CSVReader
 
@@ -12,8 +14,19 @@ def predict_csv(request: Request, file: UploadFile):
     if model is None:
         raise HTTPException(503, "Model is not ready")
 
-    csv = CSVReader(file)
-    df = model.predict_from_df(csv.df)
+    ext = Path(file.filename).suffix.lower()
+    if ext != '.csv':
+        raise HTTPException(status_code=400, detail="Неверное расширение. Ожидается CSV-файл")
+
+    try:
+        csv = CSVReader(file)
+        df = model.predict_from_df(csv.df)
+    except errors.EmptyDataError:
+        raise HTTPException(status_code=400, detail="Загружен пустой CSV-файл")
+    except errors.ParserError as e:
+        raise HTTPException(status_code=400, detail=f"Ошибка парсинга CSV: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Неверный формат файла: {e}")
 
     buffer = io.StringIO()
     df.to_csv(buffer, index=False)
@@ -22,5 +35,5 @@ def predict_csv(request: Request, file: UploadFile):
     return StreamingResponse(
         buffer,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=data.csv"}
+        headers={"Content-Disposition": "attachment; filename=predictions.csv"}
     )
